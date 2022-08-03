@@ -1,0 +1,22 @@
+version: "3.7"
+services:
+  server:
+    restart: unless-stopped
+    user: "1000:1000"
+    env_file:
+      - ./server/.env
+    volumes:
+      - ./server/src:/home/node/app/src
+      - ./server/nodemon.json:/home/node/app/nodemon.json
+    container_name: media-server
+    build:
+      context: ./server
+      dockerfile: ./Dockerfile
+      target: base
+    expose:
+      - "8755"
+    ports:
+      - "8755:8755"
+    env_file:
+      - ./server/.env
+    command: npm run dev
