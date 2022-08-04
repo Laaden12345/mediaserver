@@ -2,6 +2,6 @@
     "watch": ["src"],
     "ext": "ts, json",
     "execMap": {
-        "ts": "node --inspect=0.0.0.0:9229 --nolazy -r ts-node/register"
+        "ts": "node --nolazy -r ts-node/register"
     }
   }
