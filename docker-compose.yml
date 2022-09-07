@@ -4,13 +4,12 @@ services:
     restart: unless-stopped
     user: "1000:1000"
     links:
-      - media-db
+      - db
     env_file:
       - ./server/.env
     volumes:
       - ./server/src:/home/node/app/src
       - ./server/nodemon.json:/home/node/app/nodemon.json
-      - ./keys:/home/node/app/keys
     network_mode: host
     container_name: media-server
     build:
@@ -24,13 +23,14 @@ services:
     env_file:
       - ./server/.env
     command: npm run dev
-  media-db:
+  db:
     image: postgres:latest
+    container_name: media-db
     restart: unless-stopped
     environment: 
-      - POSTGRES_USER=docker
-      - POSTGRES_PASSWORD=docker
-      - POSTGRES_DB=mediaserver
+      - POSTGRES_USER=${PGUSER}
+      - POSTGRES_PASSWORD=${PGPASSWORD}
+      - POSTGRES_DB=${PGNAME}
       - POSTGRES_PORT=5432
     ports:
       - "5430:5432"
