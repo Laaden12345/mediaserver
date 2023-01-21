@@ -3,14 +3,16 @@ services:
   server:
     restart: unless-stopped
     user: "1000:1000"
+    depends_on:
+      - db
     links:
       - db
     env_file:
-      - ./server/.env
+      - .env
     volumes:
       - ./server/src:/home/node/app/src
       - ./server/nodemon.json:/home/node/app/nodemon.json
-    network_mode: host
+      - /data/test:/home/node/app/media
     container_name: media-server
     build:
       context: ./server
@@ -20,14 +22,12 @@ services:
       - "8755"
     ports:
       - "8755:8755"
-    env_file:
-      - ./server/.env
     command: npm run dev
   db:
     image: postgres:latest
     container_name: media-db
     restart: unless-stopped
-    environment: 
+    environment:
       - POSTGRES_USER=${PGUSER}
       - POSTGRES_PASSWORD=${PGPASSWORD}
       - POSTGRES_DB=${PGNAME}
@@ -37,4 +37,4 @@ services:
     expose:
       - "5432"
     volumes:
-      - ./server/initdb.sql:/docker-entrypoint-initdb.d/database-seed.sql
+      - /data/postgres/dev/mediaserver:/var/lib/postgres/data

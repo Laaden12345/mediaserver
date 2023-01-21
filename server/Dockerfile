@@ -1,4 +1,4 @@
-FROM node:17 as base
+FROM node:16 as base
 
 WORKDIR /home/node/app
 
@@ -12,4 +12,4 @@ FROM base as production
 
 ENV NODE_PATH=./build
 
-RUN npm run build
+CMD [ "npm", "run", "build" ]
