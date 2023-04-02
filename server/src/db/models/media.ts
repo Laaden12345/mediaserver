@@ -7,6 +7,7 @@ import {
   DataTypes,
   Association,
   ForeignKey,
+  UUIDV4,
 } from "sequelize"
 
 import sequelize from ".."
@@ -20,11 +21,12 @@ export class Series extends Model<
   InferAttributes<Series, { omit: "seasons" }>,
   InferCreationAttributes<Series, { omit: "seasons" }>
 > {
-  declare id: CreationOptional<number>
+  declare id: CreationOptional<string>
   declare name: string
   declare description: string | null
   declare tmdbID: number | null
   declare releaseDate: Date | null
+  declare poster: string | null
   declare updatedAt: CreationOptional<Date>
   declare createdAt: CreationOptional<Date>
   declare seasons?: NonAttribute<Episode[]>
@@ -36,10 +38,11 @@ export class Season extends Model<
   InferAttributes<Season, { omit: "episodes" }>,
   InferCreationAttributes<Season, { omit: "episodes" }>
 > {
-  declare id: CreationOptional<number>
+  declare id: CreationOptional<string>
   declare tmdbID: number | null
   declare number: number
   declare description: string | null
+  declare poster: string | null
   declare updatedAt: CreationOptional<Date>
   declare createdAt: CreationOptional<Date>
   declare seriesId: ForeignKey<Series["id"]>
@@ -52,7 +55,7 @@ export class Season extends Model<
 }
 
 export class Episode extends Model {
-  declare id: CreationOptional<number>
+  declare id: CreationOptional<string>
   declare name: string | null
   declare description: string | null
   declare tmdbID: number | null
@@ -60,6 +63,7 @@ export class Episode extends Model {
   declare updatedAt: CreationOptional<Date>
   declare createdAt: CreationOptional<Date>
   declare path: string
+  declare thumbnail: string | null
   declare seriesName: string
   declare series: NonAttribute<Series>
   declare season: NonAttribute<Season>
@@ -73,7 +77,7 @@ export class Episode extends Model {
 }
 
 export class Movie extends Model {
-  declare id: CreationOptional<number>
+  declare id: CreationOptional<string>
   declare name: string
   declare description: string | null
   declare tmdbID: number | null
@@ -87,8 +91,8 @@ export class Movie extends Model {
 Series.init(
   {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: UUIDV4,
       primaryKey: true,
     },
     name: {
@@ -101,6 +105,10 @@ Series.init(
     },
     tmdbID: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    poster: {
+      type: DataTypes.STRING,
       allowNull: true,
     },
     releaseDate: {
@@ -119,8 +127,8 @@ Series.init(
 Season.init(
   {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: UUIDV4,
       primaryKey: true,
     },
     tmdbID: {
@@ -135,6 +143,10 @@ Season.init(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    poster: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     updatedAt: DataTypes.DATE,
     createdAt: DataTypes.DATE,
   },
@@ -147,8 +159,8 @@ Season.init(
 Episode.init(
   {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: UUIDV4,
       primaryKey: true,
     },
     name: {
@@ -175,6 +187,10 @@ Episode.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    thumbnail: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     episodeNumber: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -195,8 +211,8 @@ Episode.init(
 Movie.init(
   {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: UUIDV4,
       primaryKey: true,
     },
     name: {

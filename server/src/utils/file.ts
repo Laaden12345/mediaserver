@@ -5,8 +5,9 @@ import { VideoType } from "../db/models/media"
 
 const extensions = /(?:mkv)|(?:mp4)|(?:avi)|(?:flv)/
 const yearPattern = /\(\d{4}\)/
-const seasonChapterPattern = /([sS]\d{2}[eE]\d{2})|([eE]\d{2})/g
+const seasonEpisodePattern = /([sS]\d{2}[eE]\d{2})/
 const seasonPattern = /(Season \d{1,3})/
+const episodePattern = /([eE]\d{2})/
 
 export const getNestedFiles = (path, fileArray = []) => {
   const files = fs.readdirSync(path)
@@ -22,6 +23,12 @@ export const getNestedFiles = (path, fileArray = []) => {
   return newFileArray
 }
 
+/**
+ * Gets the series name, season, episode, and year from the file path
+ * @param file file path
+ * @param videoType
+ * @returns
+ */
 export const getInfoFromFile = (
   file: string,
   videoType: VideoType
@@ -30,10 +37,12 @@ export const getInfoFromFile = (
     const info = { path: file } as FileInfo
     try {
       const splitPath = file.split("/")
+      const fileName = splitPath[splitPath.length - 1]
 
+      // Assume the folder structure is ./seriesName/Season/fileName.mkv
       let seriesNameFromFilePath = splitPath[splitPath.length - 3]
 
-      // remove the year in parenthesis
+      // Remove the year in parenthesis
       seriesNameFromFilePath = seriesNameFromFilePath.replace(yearPattern, "")
       info["seriesName"] = seriesNameFromFilePath
       console.log(`seriesName: ${info["seriesName"]}`)
@@ -42,62 +51,70 @@ export const getInfoFromFile = (
         throw new Error(`Failed to get series name from path`)
 
       info["path"] = file
-      const yearMatch = splitPath[splitPath.length - 3].match(yearPattern)
+      const yearMatch = seriesNameFromFilePath.match(yearPattern)
       yearMatch && (info["year"] = yearMatch[0].slice(1, -1))
-      info["year"] && console.log(info["year"])
 
-      if (videoType == VideoType.Series) {
-        const seasonChapterMatch =
-          splitPath[splitPath.length - 1].match(seasonChapterPattern)
-        if (seasonChapterMatch) {
-          const seasonChapter = seasonChapterMatch[0]
+      // Search for a season-episode pattern (S01E01)
+      const seasonEpisodeMatch = fileName.match(seasonEpisodePattern)
+      if (seasonEpisodeMatch) {
+        const seasonEpisode = seasonEpisodeMatch[0]
+        console.log(`seasonEpisode: ${seasonEpisode}`)
 
-          //search for a season pattern and remove the S to get season number
-          const season = seasonChapter
-            .toLowerCase()
-            .match(/[s]\d{2}/)[0]
-            .split("s")[1]
-          const episode = seasonChapter
-            .toLowerCase()
-            .match(/[e]\d{2}/)[0]
-            .split("e")[1]
-          info["seasonNumber"] = parseInt(season)
-          info["episodeNumber"] = parseInt(episode)
+        // Get season from the season-episode pattern
+        const seasonMatch = seasonEpisode.toLowerCase().match(/[s]\d{2}/)
+        if (seasonMatch) {
+          const season = parseInt(seasonMatch[0].split("s")[1])
+          info["seasonNumber"] = season
+        }
+        // Do the same for episode
+        const episodeMatch = seasonEpisode.toLowerCase().match(/[e]\d{2}/)
+        if (episodeMatch) {
+          const episode = parseInt(episodeMatch[0]?.split("e")[1])
+          console.log(`episode: ${episode}`)
+
+          info["episodeNumber"] = episode
+        }
+      } else {
+        const seasonFromPathMatch =
+          splitPath[splitPath.length - 2].match(seasonPattern)
+
+        if (seasonFromPathMatch) {
+          info["seasonNumber"] = parseInt(
+            seasonFromPathMatch[0].toLowerCase().split("season ")[1]
+          )
+        }
+
+        let episodeMatch: RegExpMatchArray
+        let episode: number
+
+        // Check if the file name has the episode number in the beginning
+        episodeMatch = fileName.match(/^(\d{1,3})/)
+        if (episodeMatch) {
+          episode = parseInt(episodeMatch[0])
+          info["episodeNumber"] = episode
+          console.log(
+            `episode found from the start of the file name: ${episode}`
+          )
+          return info
+        }
+        // Check if the file name has the episode number in the end
+        episodeMatch = fileName.match(/(\d{1,3})\./)
+        if (episodeMatch) {
+          episode = parseInt(episodeMatch[0].slice(0, -1))
+          info["episodeNumber"] = episode
+          console.log(`episode found from the end of the file name: ${episode}`)
+          return info
+        }
+        // Search for the episode in E01 format (the most error prone solution)
+        episodeMatch = fileName.toLowerCase().match(/[e]\d{2}/)
+        if (episodeMatch) {
+          episode = parseInt(episodeMatch[0]?.split("e")[1])
+          console.log(`episode: ${episode}`)
+
+          info["episodeNumber"] = episode
+          return info
         } else {
-          const seasonFromPathMatch =
-            splitPath[splitPath.length - 2].match(seasonPattern)
-
-          if (seasonFromPathMatch) {
-            info["seasonNumber"] = parseInt(
-              seasonFromPathMatch[0].toLowerCase().split("season ")[1]
-            )
-          }
-
-          let episode: number
-          // check if the file name has the episode number in the beginning
-          const episodeMatchBeginning =
-            splitPath[splitPath.length - 1].match(/^(\d{1,3})/)
-          if (episodeMatchBeginning) {
-            episode = parseInt(episodeMatchBeginning[0])
-            info["episodeNumber"] = episode
-            console.log(
-              `episode found from the start of the file name: ${episode}`
-            )
-            return info
-          }
-          // check if the file name has the episode number in the end
-          const episodeMatchEnd =
-            splitPath[splitPath.length - 1].match(/(\d{1,3})\./)
-          if (episodeMatchEnd) {
-            episode = parseInt(episodeMatchEnd[0].slice(0, -1))
-            info["episodeNumber"] = episode
-            console.log(
-              `episode found from the end of the file name: ${episode}`
-            )
-            return info
-          } else {
-            throw new Error(`Failed to get episode number from path`)
-          }
+          throw new Error(`Failed to get episode number from path`)
         }
       }
     } catch (e) {

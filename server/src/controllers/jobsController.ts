@@ -10,9 +10,7 @@ import {
 
 export const scanSeries = async (req: Request, res: Response) => {
   const files = getNestedFiles("./media/tv")
-  // prevent searching for same series for every episode
   let totalFiles = 0
-  let episodeCount = 0
   const force = req.body.force === "true"
 
   for (const file of files) {
@@ -38,6 +36,5 @@ export const scanSeries = async (req: Request, res: Response) => {
 
   res.send({
     totalFiles: totalFiles,
-    episodeCount: episodeCount,
   })
 }

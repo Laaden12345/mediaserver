@@ -1,0 +1,45 @@
+.horizontal {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+}
+.media-list {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    overflow: hidden;
+}
+
+.scroll-arrow {
+    font-size: xx-large;
+}
+
+.scroll-arrow:hover {
+    cursor: pointer;
+    transform: scale(1.2);
+}
+
+.left {
+    left: 0;
+}
+
+.media {
+    margin: 0 1rem 0 0;
+}
+
+.media:hover {
+    cursor: pointer;
+}
+
+.media:hover .media-name {
+    text-decoration: underline;
+}
+
+@media screen and (max-width: 768px) {
+    .media-list {
+        overflow: scroll;
+        overflow-y: hidden;
+    }
+}

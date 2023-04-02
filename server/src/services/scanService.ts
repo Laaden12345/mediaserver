@@ -1,17 +1,9 @@
-import axios from "axios"
+import { getPoster, tmdbApiInstance } from "../utils/tmdb"
 import { Episode, Season, Series } from "../db/models/media"
+import path from "path"
+import { postersPath } from "../config/config"
 
-const tmdbBaseUrl = `https://api.themoviedb.org/3`
-
-/**
- * An axios instance for the TMDB API that automatically adds the bearer token to a request
- */
-const tmdbApiInstance = axios.create({
-  baseURL: tmdbBaseUrl,
-  headers: {
-    Authorization: `Bearer ${process.env.TMDB_BEARER_TOKEN}`,
-  },
-})
+const tmdbConfig = async () => await tmdbApiInstance.get("/configuration")
 
 /**
  * Gets series information from TMDB if the series does not already exist in the database
@@ -36,9 +28,16 @@ export const handleSeries = async (episode: Episode, force: boolean) => {
       const seriesSearchResult = await tmdbApiInstance.get(
         `/search/tv?query=${episode.seriesName}`
       )
-
-      seriesData =
-        seriesSearchResult.data?.results && seriesSearchResult.data.results[0]
+      if (seriesSearchResult.data?.results) {
+        const exactMatch = seriesSearchResult.data.results.find(
+          (result) => result.name === episode.seriesName
+        )
+        if (exactMatch) {
+          seriesData = exactMatch
+        } else {
+          seriesData = seriesSearchResult.data.results[0]
+        }
+      }
       requests++
     } catch (error) {
       console.error("Error searching for series:")
@@ -59,10 +58,12 @@ export const handleSeries = async (episode: Episode, force: boolean) => {
         const seriesResult = await tmdbApiInstance.get(`/tv/${seriesId}`)
         requests++
         if (seriesResult.data) {
-          ;(newSeries.name = seriesResult.data.name),
-            (newSeries.tmdbID = seriesId),
-            (newSeries.releaseDate = seriesResult.data.first_air_date),
-            (newSeries.description = seriesResult.data.overview)
+          await getPoster(seriesResult.data.poster_path)
+          newSeries.name = seriesResult.data.name
+          newSeries.tmdbID = seriesId
+          newSeries.releaseDate = seriesResult.data.first_air_date
+          newSeries.description = seriesResult.data.overview
+          newSeries.poster = seriesResult.data.poster_path
         } else {
           return null
         }
@@ -72,6 +73,8 @@ export const handleSeries = async (episode: Episode, force: boolean) => {
     } else {
       newSeries.name = episode.seriesName
     }
+    console.log(newSeries.poster)
+
     await newSeries.save()
     console.log(`Created series ${newSeries.name}`)
 
@@ -141,9 +144,6 @@ export const handleEpisode = async (
   episode: Episode,
   force: boolean
 ) => {
-  console.log("episode:")
-  console.log(episode)
-
   // Create where clauses for the series and season to be used in the database query
   let seriesWhere = {}
   if (series) {
@@ -195,9 +195,14 @@ export const handleEpisode = async (
       await episodeResult.save()
       return episodeResult
     } catch (error) {
-      console.error("Error creating episode:")
-      console.error(error)
-      return null
+      if (error.response?.status === 404) {
+        console.error(`Episode ${episode.episodeNumber} not found`)
+        return null
+      } else {
+        console.error("Error creating episode:")
+        console.error(error)
+        return null
+      }
     }
   }
 }

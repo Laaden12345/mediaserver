@@ -1,11 +1,11 @@
-import { Sequelize } from "sequelize";
+import { Sequelize } from "sequelize"
 import {
   db_host,
   db_port,
   db_name,
   db_user,
   db_password,
-} from "../config/config";
+} from "../config/config"
 
 const sequelize = new Sequelize({
   dialect: "postgres",
@@ -14,6 +14,6 @@ const sequelize = new Sequelize({
   database: db_name,
   username: db_user,
   password: db_password,
-});
+})
 
-export default sequelize;
+export default sequelize
