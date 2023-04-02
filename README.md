@@ -39,7 +39,7 @@ media/  # this folder can be named however you like
 ```
 
 ## Requirements
-Requires docker and node 17+
+Requires docker and node 16+
 
 Add .env to server/ folder with the following information:  
 PORT=\<backend port>  

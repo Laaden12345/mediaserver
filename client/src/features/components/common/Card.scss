@@ -1,0 +1,54 @@
+.card-container {
+  position: relative;
+  width: 10rem;
+  height: 15rem;
+}
+
+@media screen and (max-width: 768px) {
+  .card-container {
+    width: 7.5rem;
+    height: 10rem;
+  }
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  border-radius: .5rem;
+}
+.card-overlay {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: .5rem;
+  transition: background .2s linear;
+}
+
+.play-icon {
+  visibility: hidden;
+  opacity:0;
+  transition: opacity 0.2s linear;
+  width: 3rem;
+  height: 3rem;
+}
+
+.card-container:hover .play-icon {
+  visibility: visible;
+  opacity:1;
+
+}
+
+.play-icon:hover {
+  transform: scale(1.2);
+}
+
+.card-container:hover .card-overlay {
+  background: rgba(0, 0, 0, .8);
+
+}

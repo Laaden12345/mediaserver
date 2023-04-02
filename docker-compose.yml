@@ -1,5 +1,24 @@
 version: "3.7"
 services:
+  client:
+    restart: unless-stopped
+    depends_on:
+      - server
+    links:
+      - server
+    volumes:
+      - ./client/src:/home/node/app/src
+    container_name: media-client
+    env_file:
+      - .env
+    build:
+      context: ./client
+      dockerfile: ./Dockerfile
+      target: base
+    ports:
+      - ${FRONTEND_PORT}:${FRONTEND_PORT}
+    command: npm run dev
+
   server:
     restart: unless-stopped
     user: "1000:1000"
@@ -12,29 +31,28 @@ services:
     volumes:
       - ./server/src:/home/node/app/src
       - ./server/nodemon.json:/home/node/app/nodemon.json
-      - /data/test:/home/node/app/media
+      - ${DATA_DIR}:/home/node/app/media
+      - ${POSTER_DIR}:/home/node/app/posters
     container_name: media-server
     build:
       context: ./server
       dockerfile: ./Dockerfile
       target: base
-    expose:
-      - "8755"
     ports:
-      - "8755:8755"
+      - ${PORT}:${PORT}
     command: npm run dev
   db:
     image: postgres:latest
     container_name: media-db
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - POSTGRES_USER=${PGUSER}
       - POSTGRES_PASSWORD=${PGPASSWORD}
       - POSTGRES_DB=${PGNAME}
-      - POSTGRES_PORT=5432
+      - POSTGRES_PORT=${PGPORT}
     ports:
-      - "5430:5432"
-    expose:
-      - "5432"
+      - ${PGPORT}:${PGPORT}
     volumes:
       - /data/postgres/dev/mediaserver:/var/lib/postgres/data
